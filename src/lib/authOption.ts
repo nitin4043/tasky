@@ -81,6 +81,9 @@ export const authOptions: NextAuthOptions = {
     async signIn() {
       return true;
     },
+    async redirect({ url, baseUrl }) {
+      return url.startsWith(baseUrl) ? url : baseUrl + "/dashboard";
+    },
   },
   pages: {
     signIn: "/login",
