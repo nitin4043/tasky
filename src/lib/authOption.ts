@@ -140,6 +140,17 @@ export const authOptions: NextAuthOptions = {
     updateAge: 24 * 60 * 60,
   },
   secret: getSecret(),
+  events: {
+    async signIn(message) {
+      console.log("SignIn event:", message);
+    },
+    async signOut(message) {
+      console.log("SignOut event:", message);
+    },
+    async error(message) {
+      console.error("Auth error event:", message);
+    },
+  },
 };
 
 export default authOptions;
