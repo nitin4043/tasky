@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSearchParams } from "react";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+    
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -14,20 +19,29 @@ export default function LoginPage() {
         setLoading(true);
         setError("");
 
-        const result = await signIn("credentials", {
-            email,
-            password,
-            redirect: false,
-            callbackUrl: "/dashboard",
-        });
+        try {
+            const result = await signIn("credentials", {
+                email,
+                password,
+                redirect: false,
+            });
 
-        if (result?.error) {
-            setError(result.error);
-        } else if (result?.ok) {
-            window.location.href = "/dashboard";
+            if (result?.error) {
+                setError(result.error || "Failed to sign in. Please check your credentials.");
+                setLoading(false);
+            } else if (result?.ok) {
+                // Force a refresh to ensure session is loaded before redirecting
+                await new Promise(resolve => setTimeout(resolve, 500));
+                router.push(callbackUrl);
+            } else {
+                setError("An unexpected error occurred. Please try again.");
+                setLoading(false);
+            }
+        } catch (err) {
+            setError("An error occurred. Please try again.");
+            console.error("Sign in error:", err);
+            setLoading(false);
         }
-
-        setLoading(false);
     }
 
     return (

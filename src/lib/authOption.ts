@@ -82,7 +82,16 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async redirect({ url, baseUrl }) {
-      return url.startsWith(baseUrl) ? url : baseUrl + "/dashboard";
+      // If the URL is already on the base domain, return it as is
+      if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      // If the URL starts with /, it's a relative URL, make it absolute
+      if (url.startsWith("/")) {
+        return baseUrl + url;
+      }
+      // Otherwise, return the base URL with dashboard path
+      return baseUrl + "/dashboard";
     },
   },
   pages: {
