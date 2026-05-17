@@ -117,7 +117,6 @@ export const authOptions: NextAuthOptions = {
     updateAge: 24 * 60 * 60,
   },
   secret: process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET,
-  trustHost: true, // Important for production deployments
 };
 
 export default authOptions;
