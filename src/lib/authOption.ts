@@ -82,16 +82,21 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async redirect({ url, baseUrl }) {
+      console.log("Redirect Debug:", { url, baseUrl, NEXTAUTH_URL: process.env.NEXTAUTH_URL });
+      
+      // Always use environment NEXTAUTH_URL if available
+      const authUrl = process.env.NEXTAUTH_URL || baseUrl;
+      
       // If the URL is already on the base domain, return it as is
-      if (url.startsWith(baseUrl)) {
+      if (url.startsWith(authUrl)) {
         return url;
       }
       // If the URL starts with /, it's a relative URL, make it absolute
       if (url.startsWith("/")) {
-        return baseUrl + url;
+        return authUrl + url;
       }
       // Otherwise, return the base URL with dashboard path
-      return baseUrl + "/dashboard";
+      return authUrl + "/dashboard";
     },
   },
   pages: {
