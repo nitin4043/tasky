@@ -9,6 +9,23 @@ type TokenWithMeta = JWT & {
   provider?: string;
 };
 
+// Validate required environment variables
+const getSecret = (): string => {
+  const secret = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("NEXTAUTH_SECRET or JWT_SECRET environment variable is not set");
+  }
+  return secret;
+};
+
+const getNextAuthUrl = (): string => {
+  const url = process.env.NEXTAUTH_URL;
+  if (!url) {
+    throw new Error("NEXTAUTH_URL environment variable is not set");
+  }
+  return url;
+};
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -87,24 +104,30 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async redirect({ url, baseUrl }) {
-      const authUrl = process.env.NEXTAUTH_URL || baseUrl;
-      console.log("Redirect Debug:", { url, baseUrl, authUrl, NODE_ENV: process.env.NODE_ENV });
-      
-      // If the URL is already on the auth domain, return it as is
-      if (url.startsWith(authUrl)) {
-        console.log("URL matches authUrl, returning:", url);
-        return url;
+      try {
+        // Prefer NEXTAUTH_URL from environment, fallback to baseUrl
+        const authUrl = process.env.NEXTAUTH_URL?.trim() || baseUrl;
+        console.log("Redirect Debug:", { url, baseUrl, authUrl, NODE_ENV: process.env.NODE_ENV });
+        
+        // If the URL is already on the auth domain, return it as is
+        if (url.startsWith(authUrl)) {
+          console.log("URL matches authUrl, returning:", url);
+          return url;
+        }
+        // If the URL starts with /, it's a relative URL, make it absolute
+        if (url.startsWith("/")) {
+          const redirectUrl = authUrl + url;
+          console.log("Relative URL detected, redirecting to:", redirectUrl);
+          return redirectUrl;
+        }
+        // Otherwise, return the auth URL with dashboard path
+        const defaultUrl = authUrl + "/dashboard";
+        console.log("Default redirect:", defaultUrl);
+        return defaultUrl;
+      } catch (err) {
+        console.error("Redirect error:", err);
+        return baseUrl + "/dashboard";
       }
-      // If the URL starts with /, it's a relative URL, make it absolute
-      if (url.startsWith("/")) {
-        const redirectUrl = authUrl + url;
-        console.log("Relative URL detected, redirecting to:", redirectUrl);
-        return redirectUrl;
-      }
-      // Otherwise, return the auth URL with dashboard path
-      const defaultUrl = authUrl + "/dashboard";
-      console.log("Default redirect:", defaultUrl);
-      return defaultUrl;
     },
   },
   pages: {
@@ -116,7 +139,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60,
     updateAge: 24 * 60 * 60,
   },
-  secret: process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET,
+  secret: getSecret(),
 };
 
 export default authOptions;
