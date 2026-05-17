@@ -20,25 +20,43 @@ export default function LoginPage() {
         setError("");
 
         try {
+            console.log("Attempting sign in with:", { email, callbackUrl });
+            
             const result = await signIn("credentials", {
                 email,
                 password,
                 redirect: false,
+                callbackUrl: callbackUrl,
             });
 
+            console.log("SignIn result:", result);
+
             if (result?.error) {
-                setError(result.error || "Failed to sign in. Please check your credentials.");
+                const errorMessage = result.error || "Failed to sign in. Please check your credentials.";
+                console.error("Sign in error:", errorMessage);
+                setError(errorMessage);
                 setLoading(false);
             } else if (result?.ok) {
-                // Force a refresh to ensure session is loaded before redirecting
-                await new Promise(resolve => setTimeout(resolve, 500));
-                router.push(callbackUrl);
+                console.log("Authentication successful, redirecting to:", callbackUrl);
+                // Wait a bit for session to be established
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Use router.replace instead of push for cleaner history
+                router.replace(callbackUrl);
+                
+                // Force a hard redirect as fallback
+                setTimeout(() => {
+                    window.location.href = callbackUrl;
+                }, 2000);
             } else {
-                setError("An unexpected error occurred. Please try again.");
+                const unexpectedError = "An unexpected error occurred. Please try again.";
+                console.error("Unexpected result:", result);
+                setError(unexpectedError);
                 setLoading(false);
             }
         } catch (err) {
-            setError("An error occurred. Please try again.");
+            const catchError = "An error occurred. Please try again.";
+            setError(catchError);
             console.error("Sign in error:", err);
             setLoading(false);
         }
